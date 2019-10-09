@@ -3,7 +3,8 @@ import hashlib
 
 
 class AliPayDemo:
-    def __init__(self,
+    def __init__(
+        self,
         app_public_key_cert_string,  # 应用公钥证书
         alipay_public_key_cert_string,  # 支付宝公钥证书
         alipay_root_cert_string  # 支付宝根证书
@@ -24,7 +25,7 @@ class AliPayDemo:
             m = hashlib.md5()
             m.update(bytes(string, encoding="utf8"))
             return fileMD5(m.hexdigest())
-        
+
     def read_pem_cert_chain(self, certContent):
         certs = list()
         for c in certContent.split('\n\n'):
