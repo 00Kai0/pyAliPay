@@ -3,8 +3,7 @@ import hashlib
 
 
 class AliPayDemo:
-    def __init__(
-        self,
+    def __init__(self,
         app_public_key_cert_string,  # 应用公钥证书
         alipay_public_key_cert_string,  # 支付宝公钥证书
         alipay_root_cert_string  # 支付宝根证书
@@ -25,7 +24,7 @@ class AliPayDemo:
             m = hashlib.md5()
             m.update(bytes(string, encoding="utf8"))
             return fileMD5(m.hexdigest())
-
+        
     def read_pem_cert_chain(self, certContent):
         certs = list()
         for c in certContent.split('\n\n'):
@@ -34,9 +33,26 @@ class AliPayDemo:
         return certs
 
     def get_root_cert_sn(self, rootCert):
-        """ TODO:根证书算法未完成
         """
-        return "未完成"
+        """
+        certs = self.read_pem_cert_chain(rootCert)
+        rootCertSN = None
+        for cert in certs:
+            try:
+                sigAlg = cert.get_signature_algorithm()
+            except ValueError:
+                continue
+            if sigAlg == b'sha256WithRSAEncryption':
+                certIssue = cert.get_issuer()
+                string = certIssue.commonName + str(cert.get_serial_number())
+                m = hashlib.md5()
+                m.update(bytes(string, encoding="utf8"))
+                certSN = fileMD5(m.hexdigest())
+                if not rootCertSN:
+                    rootCertSN = certSN
+                else:
+                    rootCertSN = rootCertSN + '_' + certSN
+        return rootCertSN
 
     @property
     def app_cert_sn(self):
@@ -44,7 +60,7 @@ class AliPayDemo:
 
     @property
     def alipay_root_cert_sn(self):
-        return self.get_root_cert_sn(self._alipay_public_key_cert_string)
+        return self.get_root_cert_sn(self._alipay_root_cert_string)
 
 
 def fileMD5(md5):
