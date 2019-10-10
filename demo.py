@@ -1,5 +1,5 @@
-import OpenSSL
 import hashlib
+import OpenSSL
 
 
 class AliPayDemo:
@@ -21,10 +21,11 @@ class AliPayDemo:
     def get_cert_sn(self, cert):
             cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert)
             certIssue = cert.get_issuer()
-            string = certIssue.commonName + str(cert.get_serial_number())
+            name = 'CN={},OU={},O={},C={}'.format(certIssue.CN, certIssue.OU, certIssue.O, certIssue.C)
+            string = name + str(cert.get_serial_number())
             m = hashlib.md5()
             m.update(bytes(string, encoding="utf8"))
-            return fileMD5(m.hexdigest())
+            return m.hexdigest()
 
     def read_pem_cert_chain(self, certContent):
         certs = list()
@@ -43,12 +44,13 @@ class AliPayDemo:
                 sigAlg = cert.get_signature_algorithm()
             except ValueError:
                 continue
-            if sigAlg == b'sha256WithRSAEncryption':
+            if b'rsaEncryption' in sigAlg or b'RSAEncryption' in sigAlg:
                 certIssue = cert.get_issuer()
-                string = certIssue.commonName + str(cert.get_serial_number())
+                name = 'CN={},OU={},O={},C={}'.format(certIssue.CN, certIssue.OU, certIssue.O, certIssue.C)
+                string = name + str(cert.get_serial_number())
                 m = hashlib.md5()
                 m.update(bytes(string, encoding="utf8"))
-                certSN = fileMD5(m.hexdigest())
+                certSN = m.hexdigest()
                 if not rootCertSN:
                     rootCertSN = certSN
                 else:
@@ -62,7 +64,3 @@ class AliPayDemo:
     @property
     def alipay_root_cert_sn(self):
         return self.get_root_cert_sn(self._alipay_root_cert_string)
-
-
-def fileMD5(md5):
-    return md5 if len(md5) == 32 else fileMD5('0' + md5)
